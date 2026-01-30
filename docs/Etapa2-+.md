@@ -5,7 +5,7 @@
 O arquivo `.csv` gerado passou por um processo de validação utilizando **Pandas**.
 
 - **Arquivo tratado:** `data/dados_consolidados_final.csv`  
-- **Arquivo com os scripts em Python:** `validation.ipynb`
+- **Arquivo com os scripts em Python:** `jupyter/validation.ipynb`
 
 Após a análise, foi identificado que o arquivo ainda apresentava **inconsistências lógicas**, como:
 - CNPJs inválidos, Problemas de tipo de dado (caractere/tipo incorreto)  

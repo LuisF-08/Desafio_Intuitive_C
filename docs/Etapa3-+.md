@@ -1,5 +1,3 @@
-# Etapa 3.0
-
 # 3.1: Criação eorganização de estruturas
 ## Criei a pasta sql/ e inicialmente coloque o script schema.sql que seráonde irei aplicar a criação das tabelas com base nos consolidando_despesas do 1.3 , despesas_agregadas do 2.3 e o do 2.2 que seriam os dados antes de serem agregados o dados_operadoras_cadastrais, como mencionando no Etapa3-0.md.
 
