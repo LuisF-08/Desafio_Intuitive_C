@@ -52,6 +52,36 @@ requirements.txt
 
 >router\ #3 Caminho das rotas
 >services\ #Comunicação com a api desenvolvida no backend
->views\ 3 local onde fica a visualização das requisições
+>views\ 3 local onde fica a visualização das requisições e os templates
 >App.vue # padrão do Vue para encontrar um template 
 >main.js # inicializa o vue, junto com as demais depencias e prepara as rotas 
+
+## 4.3.1  Estratégias de Busca
+
+>Escolhi a  Híbrida (servidor + cliente). A busca principal é realizada no servidor, utilizando parâmetros de query para filtrar os dados diretamente na API. Essa decisão foi tomada considerando o alto volume de operadoras, evitando a transferência desnecessária de grandes volumes de dados para o cliente.
+
+## 4.3.2 Gerencimaneto de estado
+
+>Escolhida: Opção C — Composables (Vue 3).Foi adotado o uso de Composables, aproveitando a Composition API do Vue 3, por oferecer ,melhor organização de lógica reutilizável, menor acoplamento entre componentes, maior clareza e escalabilidade do código
+
+## 4.3.3 Performance da tabela 
+
+> Para lidar com um grande volume de operadoras, foi adotada uma estratégia combinada de:
+
+->Paginação no backend, limitando a quantidade de registros retornados por requisição
+->Renderização apenas dos dados necessários na interface
+
+##### Essa abordagem evita sobrecarga no navegador.
+
+## 4.3.4 Erros e Loading
+
+##### A aplicação trata explicitamente três estados principais:
+
+>Loading: exibido enquanto as requisições à API estão em andamento, evitando telas vazias e informando o usuário sobre o processamento.
+>Erros de rede/API: são capturados e exibidos com mensagens claras, informando falhas de comunicação ou erros inesperados.
+>Dados vazios: quando não há registros disponíveis, uma mensagem informativa é exibida.
+
+###### Optei por mensagens específicas sempre que possível, pois elas ajudam o usuário a entender o problema que foi apresentado.
+
+## 4.4 Documentação no Postman
+

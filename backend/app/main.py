@@ -2,6 +2,8 @@ from fastapi import FastAPI, Depends, HTTPException, Query
 from sqlmodel import SQLModel, select, func, col
 from sqlmodel.ext.asyncio.session import AsyncSession
 from typing import List
+from sqlalchemy import func
+from fastapi.middleware.cors import CORSMiddleware
 from aiocache import cached
 from .routers import usuarios
 # Importando do  projeto
@@ -10,6 +12,20 @@ from .database import engine, get_session
 
 app = FastAPI()
 
+# Permissão de uso de outras rotas da API
+origins = [
+    "http://localhost:5173", # Porta padrão do Vite/Vue
+    "http://localhost:8080", # Porta alternativa
+    "http://127.0.0.1:5173",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins, # Ou ["*"] para permitir tudo (apenas dev)
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 # rotas incluidas
 app.include_router(usuarios.router)
 
@@ -25,7 +41,7 @@ async def root():
 
 async def lista_operadoras(
     page: int = Query(1, ge=1),  
-    limit: int = Query(10, le=100), # Limitando o númnero exibido , poís isso sobrecarregaria a API
+    limit: int = Query(10), # Limitando o númnero exibido , poís isso sobrecarregaria a API
     session: AsyncSession = Depends(get_session)
 ):
     offset = (page - 1) * limit
@@ -56,10 +72,7 @@ async def listar_despesas_operadora(
     cnpj: str,
     session: AsyncSession = Depends(get_session)
 ):
-    # Dica: Validar se a operadora existe antes é uma boa prática
     statement = select(DespesasConsolidadas).where(DespesasConsolidadas.cnpj == cnpj)
-    
-    # AQUI O ERRO: Era Session (classe), virou session (variável injetada)
     result = await session.exec(statement) 
     
     return result.all()
@@ -89,3 +102,28 @@ async def _estatisticas_cached(session: AsyncSession):
         "custo_total_sistema": total_result.first() or 0,
         "mensagem": "Dados calculados com sucesso"
     }
+
+# grafico de despesas por UF
+@app.get("/api/estatisticas/despesas-por-uf")
+async def despesas_por_uf(session: AsyncSession = Depends(get_session)):
+    stmt = (
+        select(
+            OperadoraCadastral.uf,
+            func.sum(DespesasConsolidadas.valor_despesa).label("total")
+        )
+        .join(
+            OperadoraCadastral,
+            OperadoraCadastral.cnpj == DespesasConsolidadas.cnpj
+        )
+        .group_by(OperadoraCadastral.uf)
+    )
+
+    result = await session.execute(stmt)
+    rows = result.all()
+
+    return [
+        {"uf": uf, "total": float(total) if total else 0}
+        for uf, total in rows
+    ]
+
+

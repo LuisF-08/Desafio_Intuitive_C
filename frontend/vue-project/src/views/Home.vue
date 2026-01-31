@@ -2,9 +2,14 @@
   <div>
     <h1>Operadoras</h1>
 
-    <input v-model="busca" placeholder="Buscar..." />
-    <button @click="buscar">Buscar</button>
-
+    <input v-model="busca" placeholder="Buscar por CNPJ" />
+    <div style="margin: 10px 0;">
+      <p>Total carregado: {{ operadoras.length }}</p>
+      <p>Total exibido: {{ listaFiltrada.length }}</p>
+    </div>
+    <GraficoDespesas />
+    
+    <hr>
     <table border="1">
       <thead>
         <tr>
@@ -13,10 +18,8 @@
           <th>Ações</th>
         </tr>
       </thead>
-      <p>Total carregado: {{ operadoras.length }}</p>
-      <p>Total exibido: {{ lista.length }}</p>
       <tbody>
-        <tr v-for="op in lista" :key="op.cnpj">
+        <tr v-for="op in listaFiltrada" :key="op.cnpj">
           <td>{{ op.cnpj }}</td>
           <td>{{ op.razao_social }}</td>
           <td>
@@ -31,38 +34,33 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import api from '../services/api'
+import { ref, onMounted, computed } from 'vue'
+import OperadoraService from '../services/OperadoraService'
+import GraficoDespesas from '../views/GraficoDespesas.vue'
 
 const operadoras = ref([])
 const busca = ref('')
-const lista = ref([])
 
-const buscar = () => {
+const listaFiltrada = computed(() => {
   if (!busca.value.trim()) {
-    lista.value = operadoras.value
-    return
+    return operadoras.value
   }
-
   const termo = busca.value.toLowerCase()
+  const termoSoNumeros = termo.replace(/\D/g, '')
 
-  lista.value = operadoras.value.filter(op =>
-    op.cnpj.includes(termo) ||
-    op.razao_social.toLowerCase().includes(termo)
-  )
-}
+  return operadoras.value.filter(op => {
+    const cnpjLimpo = String(op.cnpj).replace(/\D/g, '')
+    const razaoSocial = op.razao_social ? op.razao_social.toLowerCase() : ''
 
-onMounted(async () => {
-  try {
-    const response = await api.get('/api/operadoras')
-    console.log('STATUS:', response.status)
-    console.log('DATA:', response.data)
-
-    operadoras.value = response.data
-    lista.value = response.data
-  } catch (error) {
-    console.error('Erro ao buscar operadoras', error)
-  }
+    return cnpjLimpo.includes(termoSoNumeros) || 
+            razaoSocial.includes(termo)
+  })
 })
 
+onMounted(async () => {
+  // criei uma rota comum de teste sendo a api.js mas com o
+  // OperadoraService se for expandir facilita posssíveis implementações
+  const response = await OperadoraService.listar(1000)
+  operadoras.value = response.data
+})
 </script>
