@@ -1,87 +1,288 @@
-# 4.1 estruturação da API
-Como foi escolhido por mim eu usarei o PostgreSQL com as 3 tabelas.
->despesas_agregadas
->despesas_consolidadas
->operadora_cadastrais
+# 4.1 Estruturação da API
 
-#### Criarei a pasta app/ dentro de backend/, e dentro criarei os 
+Como foi escolhido por mim, utilizarei o **PostgreSQL** com **3 tabelas principais**:
+
+* `despesas_agregadas`
+* `despesas_consolidadas`
+* `operadora_cadastrais`
+
+Foi criada a pasta `app/` dentro de `backend/`, contendo a seguinte estrutura:
+
 ```python
-__init__.py  # Usado para o python detectar como executavel o arquivo
-main.py      # Arquivo de ponto de entrada
-database.py  # Configuração de comunicação do Postgres
-models.py    # Modelo de tabelas do Banco
-teste_db.py  # Testando conexão do banco
-routers/     # Endpoints(rotas da APi)
-routers/__init.py
-routers/usuarios.py # Crud de usuarios 
+__init__.py        # Usado para o Python detectar o diretório como pacote
+main.py            # Arquivo de ponto de entrada da aplicação
+database.py        # Configuração de comunicação com o PostgreSQL
+models.py          # Modelos das tabelas do banco
+teste_db.py        # Testes de conexão com o banco
+routers/           # Endpoints (rotas da API)
+routers/__init__.py
+routers/usuarios.py  # CRUD de usuários
 requirements.txt
 ```
 
-# 4.2 Criação de Rotas 
+---
 
-#### Criei as rotas no Arquivo main.py, onde 
+# 4.2 Criação de Rotas
 
->on_startup()   #Inicia oassincronismo
->lista_operadoras()  #Lista os operadores colocando limite de exibição total de operadores
->detalhar_operadora   #Detalhas os operadores com base na coluna 'cnpj'
->listar_despesas_operadora   # lista as despesas com base no #cnpj passado
->obter_estatisticas     # obtem as estatísticas agregadas (total de despesas,média, top 5 operadoras)
+As rotas foram implementadas no arquivo `main.py`, sendo elas:
 
-## 4.2.+ (Escolhas e decisões que foram tomadas)
+* `lista_operadoras()`
+  Lista as operadoras com paginação e limite de registros.
 
-###  4.2.1 - Escolha do Framework:
-> Escolhi o FastAPI, na hora de escolher fiquei muito pensativo , pois a facilidade de iniciar algo com flask é umponto muito forte dele, entretanto, quando falamos de escalabilidade, performance , manutenção constante e ampliação do sistemas eu tendo a ir para o FAstAPI , pois nesses aspectos que falei ele ,para mim se sairia muito superior ao flask.
+* `detalhar_operadora()`
+  Detalha uma operadora com base no campo `cnpj`.
 
-### 4.2.2 -  Estratégia de Paginação:
-> escolhi o offset, Considerando que a aplicação é um painel administrativo para visualização de dados cadastrais e financeiros , a paginação por Offset é a mais indicada permitindo ao usuário navegar para páginas específicas , o que é essencial para auditoria e análise de dados.
+* `listar_despesas_operadora()`
+  Lista as despesas associadas ao CNPJ informado.
 
-### 4.2.3 - Chache ou Querys diretas
-> Escolhi por Cache, rota /api/estatisticas executa operações de agregação (Soma, Média, Ordenação) que são computacionalmente custosas para o Banco de Dados, quando pensamos em um cenário real em que multiplos usuários estão usando o Banco de dados , se tornaria lenta as querys levando até horas dependendo da complexidade da query, logo em questão de perfomance se torna melhor 
+* `obter_estatisticas()`
+  Retorna estatísticas agregadas (total de despesas, top 5 operadoras).
 
-### 4.2.4 - Respostas da API
+---
 
-> Eu prefiro fazer de Dados+Metadados, pois é mais completa e facilita bastante o consumo da API e para exibição de dados no front-end. Além de retornar os dados, ela já entrega informações importantes(total de registros, página atual , etc....), o que simplifica a implementação da paginação no front-end e em outros consumidores da API.
+## 4.2.+ Escolhas e decisões tomadas
 
+### 4.2.1 Escolha do Framework
 
+Optei pelo **FastAPI** após considerar o Flask pela simplicidade inicial.
+No entanto, pensando em **performance**, **escalabilidade**, **manutenção contínua** e **crescimento do sistema**, o FastAPI se mostrou mais adequado para esse cenário.
 
-# 4.3 Inicio do front-end
+---
 
-### Nessa parte como dito antes, criei um pasta chamada frontend/ que irá ficar responsável pla parte do Vue, dentro baixei o vue como vue-project.
+### 4.2.2 Estratégia de Paginação
 
-#### dentro do vue-project está todas as ferramentas nescessárias para subir a página, crie dentro de src as pastas:
+Foi escolhida a paginação por **offset**, considerando que a aplicação é um **painel administrativo** voltado para análise e auditoria de dados, onde navegar para páginas específicas é essencial.
 
->router\ #3 Caminho das rotas
->services\ #Comunicação com a api desenvolvida no backend
->views\ 3 local onde fica a visualização das requisições e os templates
->App.vue # padrão do Vue para encontrar um template 
->main.js # inicializa o vue, junto com as demais depencias e prepara as rotas 
+---
 
-## 4.3.1  Estratégias de Busca
+### 4.2.3 Cache vs Queries Diretas
 
->Escolhi a  Híbrida (servidor + cliente). A busca principal é realizada no servidor, utilizando parâmetros de query para filtrar os dados diretamente na API. Essa decisão foi tomada considerando o alto volume de operadoras, evitando a transferência desnecessária de grandes volumes de dados para o cliente.
+Foi adotado **cache** no endpoint `/api/estatisticas`, pois ele executa operações de agregação que podem se tornar custosas em cenários com múltiplos usuários concorrentes, impactando diretamente a performance do banco.
 
-## 4.3.2 Gerencimaneto de estado
+---
 
->Escolhida: Opção C — Composables (Vue 3).Foi adotado o uso de Composables, aproveitando a Composition API do Vue 3, por oferecer ,melhor organização de lógica reutilizável, menor acoplamento entre componentes, maior clareza e escalabilidade do código
+### 4.2.4 Respostas da API
 
-## 4.3.3 Performance da tabela 
+Foi adotado o padrão **Dados + Metadados**, pois ele facilita o consumo da API no frontend, entregando não apenas os dados, mas também informações úteis como paginação, totais e contexto da resposta.
 
-> Para lidar com um grande volume de operadoras, foi adotada uma estratégia combinada de:
+---
 
-->Paginação no backend, limitando a quantidade de registros retornados por requisição
-->Renderização apenas dos dados necessários na interface
+# 4.3 Início do Frontend
 
-##### Essa abordagem evita sobrecarga no navegador.
+Foi criada a pasta `frontend/`, responsável pela aplicação em **Vue 3**.
+Dentro dela, o projeto foi iniciado como `vue-project`.
 
-## 4.3.4 Erros e Loading
+Estrutura principal dentro de `src/`:
 
-##### A aplicação trata explicitamente três estados principais:
+* `router/` — Definição das rotas
+* `services/` — Comunicação com a API do backend
+* `views/` — Telas e templates da aplicação
+* `App.vue` — Componente raiz
+* `main.js` — Inicialização do Vue e configuração global
 
->Loading: exibido enquanto as requisições à API estão em andamento, evitando telas vazias e informando o usuário sobre o processamento.
->Erros de rede/API: são capturados e exibidos com mensagens claras, informando falhas de comunicação ou erros inesperados.
->Dados vazios: quando não há registros disponíveis, uma mensagem informativa é exibida.
+---
 
-###### Optei por mensagens específicas sempre que possível, pois elas ajudam o usuário a entender o problema que foi apresentado.
+## 4.3.1 Estratégia de Busca
+
+Foi adotada a estratégia **híbrida (servidor + cliente)**.
+A busca principal ocorre no servidor via parâmetros de query, evitando o envio de grandes volumes de dados ao frontend.
+
+---
+
+## 4.3.2 Gerenciamento de Estado
+
+Foi escolhida a **Opção C — Composables (Vue 3)**, aproveitando a Composition API por oferecer melhor reutilização de lógica, menor acoplamento e maior escalabilidade.
+
+---
+
+## 4.3.3 Performance da Tabela
+
+Para lidar com grande volume de dados:
+
+* Paginação no backend
+* Renderização apenas dos dados necessários no frontend
+
+Essa abordagem evita sobrecarga no navegador.
+
+---
+
+## 4.3.4 Tratamento de Erros e Loading
+
+A aplicação trata explicitamente:
+
+* **Loading** durante requisições
+* **Erros de rede/API** com mensagens claras
+* **Dados vazios**, exibindo feedback ao usuário
+
+Mensagens específicas foram priorizadas para melhorar a experiência do usuário.
+
+---
 
 ## 4.4 Documentação no Postman
+
+Todas as rotas da API estão documentadas em uma coleção do **Postman**, contendo exemplos completos de requisições e respostas esperadas, facilitando testes, validações e uso por terceiros.
+
+>Dentro da pasta postman\ ficou a coleção que eu criei
+
+abaixo está como ficou as rotas criadas na coleção do Postman
+```json
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "API de Operadoras e Despesas",
+    "version": "1.0.0",
+    "description": "API para consulta de operadoras, despesas e estatísticas agregadas"
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "Health Check",
+        "description": "Verifica se o servidor está ativo",
+        "responses": {
+          "200": {
+            "description": "Servidor em funcionamento"
+          }
+        }
+      }
+    },
+
+    "/api/operadoras": {
+      "get": {
+        "summary": "Listar Operadoras",
+        "description": "Lista operadoras cadastradas com paginação",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": { "type": "integer", "minimum": 1, "default": 1 }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 10 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de operadoras",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/OperadoraCadastral" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/operadoras/{cnpj}": {
+      "get": {
+        "summary": "Detalhar Operadora",
+        "description": "Retorna os dados de uma operadora pelo CNPJ",
+        "parameters": [
+          {
+            "name": "cnpj",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operadora encontrada",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OperadoraCadastral" }
+              }
+            }
+          },
+          "404": {
+            "description": "Operadora não encontrada"
+          }
+        }
+      }
+    },
+
+    "/api/operadoras/{cnpj}/despesas": {
+      "get": {
+        "summary": "Listar Despesas da Operadora",
+        "description": "Retorna o histórico de despesas de uma operadora",
+        "parameters": [
+          {
+            "name": "cnpj",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de despesas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/DespesasConsolidadas" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/estatisticas": {
+      "get": {
+        "summary":
+
+```
+
+---
+
+##  Principais Decisões 
+
+* **FastAPI** foi escolhido pela performance, tipagem forte e facilidade de escalar.
+* **PostgreSQL** como banco relacional, adequado para consultas analíticas e agregações.
+* **Paginação por offset** para facilitar auditoria e navegação entre páginas.
+* **Cache** em endpoints custosos para reduzir carga no banco.
+* **Agregações no banco de dados**, evitando processamento desnecessário no backend.
+* **Frontend desacoplado**, consumindo a API via serviços dedicados.
+* **Documentação completa via Postman**, com exemplos reais de uso.
+
+---
+
+>  Este documento é confidencial e não deve ser divulgado ou copiado sem autorização expressa do remetente.
+
+---
+
+##  Trade-offs Técnicos Considerados
+
+###  Paginação
+
+A paginação foi aplicada no backend para evitar retorno de grandes volumes de dados, melhorando a performance e reduzindo o consumo de memória tanto no servidor quanto no frontend.
+
+---
+
+###  Cache de estatísticas
+
+O endpoint de estatísticas executa queries de agregação (SUM, ORDER BY, LIMIT).
+Para evitar consultas repetidas e custosas, foi aplicado cache com TTL de 10 minutos, equilibrando **performance** e **atualização dos dados**.
+
+---
+
+###  Agregações no banco
+
+Optei por realizar cálculos diretamente no banco de dados, aproveitando suas otimizações internas e reduzindo o tráfego de dados entre banco e aplicação.
+
+---
+
+###  CORS restrito ao ambiente de desenvolvimento
+
+As origens permitidas foram limitadas a `localhost`, evitando exposição indevida da API durante o desenvolvimento.
+
+
+---
 
